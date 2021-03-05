@@ -1,4 +1,6 @@
 ﻿using BisontechDemo.DataAccessModels;
+using BisontechDemo.Models;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using System;
 using System.Collections.Generic;
@@ -25,25 +27,70 @@ namespace BisontechDemo.Controllers
         //https://stackoverflow.com/questions/47399666/entity-framework-scaffold-dbcontext-login-failed-for-user/47401662#47401662?newreg=cdd97bd8d0aa43f88f12b3a615e96a20
         //Scaffold-DbContext "Server=northwndserver.database.windows.net;Database=NorthwndCloud;User Id=northwndadmin;password=Rolando`$fcfm2021;Trusted_Connection=False;MultipleActiveResultSets=true;" Microsoft.EntityFrameworkCore.SqlServer -OutputDir DataAccess
         //Scaffold-DbContext "Server=northwndserver.database.windows.net;Database=NorthwndCloud;User Id=northwndadmin;password=Rolando.fcfm2021;Trusted_Connection=False;MultipleActiveResultSets=true;" Microsoft.EntityFrameworkCore.SqlServer -OutputDir DataAccess
+        //[HttpGet]
+        //public List<Employee> Get()
+        //{
+        //    DataAccessModels.NorthwndCloudContext dc = new DataAccessModels.NorthwndCloudContext();
+        //    return dc.Employees.ToList();
+
+        //}
+
+        DataAccessModels.NorthwndCloudContext dc = new DataAccessModels.NorthwndCloudContext();
+
         [HttpGet]
-        public List<Employee> Get()
+        public IActionResult Get()
         {
-            DataAccessModels.NorthwndCloudContext dc = new DataAccessModels.NorthwndCloudContext();
-            return dc.Employees.ToList();
+            
+            return Ok(dc.Employees.Select(s => new { s.FirstName, s.LastName, s.TitleOfCourtesy, s.PostalCode, s.HomePhone, s.EmployeeId }).ToList());
 
         }
 
         // GET api/<EmployeesController>/5
         [HttpGet("{id}")]
-        public string Get(int id)
+        public IActionResult Get(int id)
         {
-            return "value";
+            try
+            {
+                var employee = dc.Employees.Where(w => w.EmployeeId == id).FirstOrDefault();
+
+                if (employee == null)
+                    throw new Exception($"User with id {id} not found in database");
+
+
+                return Ok(employee);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(StatusCodes.Status500InternalServerError, ex.Message);
+            }
         }
 
         // POST api/<EmployeesController>
         [HttpPost]
-        public void Post([FromBody] string value)
+        public IActionResult Post([FromBody] EmployeeDTO employeeDTO)
         {
+
+            try
+            {
+                var newEmployeeRegister = new Employee();
+                newEmployeeRegister.FirstName = employeeDTO.Name;
+                newEmployeeRegister.LastName = employeeDTO.LastName;
+
+                dc.Employees.Add(newEmployeeRegister);
+                dc.SaveChanges();
+                dc.Entry(newEmployeeRegister);
+                return Ok(new { newEmployeeRegister.EmployeeId });
+            }
+            catch (Exception ex)
+            {
+                var msg = ex.Message + (ex.InnerException != null ? (ex.InnerException) : "");
+
+                return StatusCode(StatusCodes.Status500InternalServerError
+                    ,new { errorMessage = "No se pudo insertar el registro. Detalles: " + ex.Message });
+
+            }
+
+
         }
 
         // PUT api/<EmployeesController>/5
