@@ -40,7 +40,7 @@ namespace BisontechDemo.Controllers
         [HttpGet]
         public IActionResult Get()
         {
-            
+
             return Ok(dc.Employees.Select(s => new { s.FirstName, s.LastName, s.TitleOfCourtesy, s.PostalCode, s.HomePhone, s.EmployeeId }).ToList());
 
         }
@@ -49,20 +49,13 @@ namespace BisontechDemo.Controllers
         [HttpGet("{id}")]
         public IActionResult Get(int id)
         {
-            try
-            {
-                var employee = dc.Employees.Where(w => w.EmployeeId == id).FirstOrDefault();
+            var employee = dc.Employees.Where(w => w.EmployeeId == id).FirstOrDefault();
 
-                if (employee == null)
-                    throw new Exception($"User with id {id} not found in database");
+            if (employee == null)
+                throw new Exception($"User with id {id} not found in database");
 
 
-                return Ok(employee);
-            }
-            catch (Exception ex)
-            {
-                return StatusCode(StatusCodes.Status500InternalServerError, ex.Message);
-            }
+            return Ok(employee);
         }
 
         // POST api/<EmployeesController>
@@ -86,7 +79,7 @@ namespace BisontechDemo.Controllers
                 var msg = ex.Message + (ex.InnerException != null ? (ex.InnerException) : "");
 
                 return StatusCode(StatusCodes.Status500InternalServerError
-                    ,new { errorMessage = "No se pudo insertar el registro. Detalles: " + ex.Message });
+                    , new { errorMessage = "No se pudo insertar el registro. Detalles: " + ex.Message });
 
             }
 
